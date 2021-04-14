@@ -38,6 +38,10 @@ Default output format [None]: text
 
 ### 3. Create CloudWatch Log Injestion Lambda and Secrets Manager
 
+Note: Lambda extension (layer) now supports log and telemetry data which are directly sent to New Relic, so `newrelic-log-ingestion` lambda is not needed for your instrumented Lambda monitoring purpose. Secrets Manger and associated IAM Policy can also be created manually. You can either choose **newrelic-lambda appoach** or **manual step**
+
+**Newrelic-lambda Appoach**
+
 1. Go to one.newrelic.com > More > AWS Lambda Setup
 2. Click **Set up AWS Lambda**
 3. Follow the instruction. Eventually you will execute the following:
@@ -46,10 +50,46 @@ Default output format [None]: text
     # set AWS Profile
     export AWS_PROFILE=MY_PROFILE
     # create newrelic-log-ingestion lambda and secrets key in Secrets Manager
-    newrelic-lambda integrations install --nr-account-id [NR_ACCOUNT_ID] --nr-api-key [NR_API_KEY]
+    newrelic-lambda integrations install \
+      --nr-account-id [NR_ACCOUNT_ID] \
+      --nr-api-key [NR_API_KEY]
     ```
 
     The `newrelic-lambda` CLI adds your New Relic license key as a secret in [AWS Secret Manager](https://aws.amazon.com/secrets-manager/) for greater security.
+
+**Manual Approach**
+
+1. Go to **AWS Secrets Manager** console and click **Store a new secret**
+
+    - **Type**: Other type of secrets
+    - **Secret name**: NEW_RELIC_LICENSE_KEY
+    - **Secret value**: { "LicenseKey": [NR_LICENSE_KEY] }
+    - **Encryption key**: default or anything you like
+    - **Secret description**: The New Relic license key, for sending telemetry
+
+    Note: Copy ARN of your secret key which is used in the next step
+
+2. Go to **AWS IAM** console > Policies and click **Create policy**
+
+    - **Policy name**: NewRelic-ViewLicenseKey-us-east-1<br>
+        Note: policy name must be the following format. Only replace the region part if your lambda is deployed other than `us-east-1`
+    - **Policy**:<br>
+        Note: Replace the following `Resource` section with your ARN of your secret key<br>
+        ```json
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "VisualEditor0",
+              "Effect": "Allow",
+              "Action": "secretsmanager:GetSecretValue",
+              "Resource": "arn:aws:secretsmanager:us-east-1:0000000000:secret:NEW_RELIC_LICENSE_KEY-xxxxx"
+            }
+          ]
+        }
+        ```
+
+3. Go to **AWS IAM** console > Roles and click `AWSLambdaBasicExecutionRole` or any custom role for lambda which you might create in the next section and attache the above policy, so lamda can read the `[NR_LICENSE_KEY]` from Secrets Manager
 
 ### 4. Deploy Your Lambda (Instrumented Lambda)
 
