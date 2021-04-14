@@ -93,14 +93,8 @@ Default output format [None]: text
     This will add the following **Environment variables** in your instrumented lambda:
     - NEW_RELIC_EXTENSION_SEND_FUNCTION_LOGS: true
     - NEW_RELIC_LAMBDA_EXTENSION_ENABLED: true
-5. Enable lambda log sending to New Relic via `newrelic-log-ingestion` lambda
-    ```bash
-    # Attach CloudWatch Log Group to newrelic-log-ingestion lambda
-    newrelic-lambda subscriptions install \
-      -f [LAMBDA_NAME]
-    ```
-6. Execute lambda
-7. Go to one.newrelic.com > Explorer > [LAMBDA_NAME]
+5. Execute lambda
+6. Go to one.newrelic.com > Explorer > [LAMBDA_NAME]
 
 ### 5. Remove Your Lambda (Instrumented Lambda) and CloudWatch group
 
